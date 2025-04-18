@@ -111,9 +111,16 @@ def connect(_class, url, _dargs=None, _jars=None, _libs=None, *args, **kwargs):
             _libs = [_libs]
     else:
         _libs = []
+    _auto_commit = (
+        v
+        if not (v := kwargs.pop("_auto_commit", None))
+        else v.strip().lower() == "true"
+    )
     jconn = jaydebeapi_ext._jdbc_connect(
         _class, url, _dargs, _jars, _libs, *args, **kwargs
     )
+    if _auto_commit is not None:
+        jconn.setAutoCommit(_auto_commit)
     return jaydebeapi_ext.Connection(jconn, jaydebeapi_ext._converters)
 
 
@@ -174,8 +181,13 @@ class BaseJDBCDialect(default.DefaultDialect):
             "_libs",
             "_jvmpath",
             "_jvmargs",
+            "_auto_commit",
         ]
         jdbc_qformat_kw = ["_start", "_assoc", "_sep", "_end", "_raw_host"]
+        jdbc_sqlserver_dargs_kw = [
+            "username",
+            "password",
+        ]
         orig_opts = url.translate_connect_args()
 
         orig_opts.update(url.query)
@@ -192,6 +204,12 @@ class BaseJDBCDialect(default.DefaultDialect):
             host = str(url).split(_start)[0]
             host = host.split("://")[-1]
         host_agg = host
+
+        if orig_opts["_driver"] == "sqlserver":
+            _dargs = {}
+            for darg_name in jdbc_sqlserver_dargs_kw:
+                _dargs[darg_name] = orig_opts.pop(darg_name)
+            new_opts["_dargs"] = _dargs
 
         for k, v in orig_opts.items():
             if k in jdbc_kw:
