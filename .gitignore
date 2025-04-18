@@ -1,3 +1,4 @@
+.idea
 dist
 build
 __test_*.py
