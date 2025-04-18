@@ -19,7 +19,7 @@ pip install sqlalchemy-jdbc-generic
 
 1. Clone repository
    ```
-    git clone https://github.com/bwadle/sqlalchemy-jdbc-generic
+    git clone https://github.com/AskuSU/sqlalchemy-jdbc-generic
    ```
 2. Navigate to cloned directory
    ```
@@ -103,6 +103,7 @@ Other arguments specific to the _sqlajdbc_ dialect can be passed to change the b
 |`_jars`| path(s) to the **jar files** for JDBC driver given as a string or string representation of a list of paths | see [Where to Place Jar Files](#where-to-place-jdbc-jar-files) section|
 |`_jvmpath`| path to the **Java Virtual Machine** driver (`jvm.so`, `jvm.dll`) to be used instead of the default JVM within the path pointed to by the `JAVA_HOME` os environment variable. | `/path/to/jvm.so` |
 |`_jvmargs`| **JVM arguments** be be passed to `jpype.startJVM()`| see [jpype JVM Functions Documentation](https://jpype.readthedocs.io/en/latest/api.html#jpype.startJVM)
+|`_auto_commit`| Enable or disable Auto Commit in the sql driver | true / false
 
 ### Query Arguments
 The default behavior is to assume query parameters are separated from the host url by a question mark (`?`) and each parameter name-value pair is separated by ampersands (`&`) with an equal sign (`=`) used to separate the name and value for each.
@@ -583,9 +584,42 @@ with eng.connect() as c:
 ### Microsoft SQL Server
 > SQLAlchemy supports MSSQL natively so there may be no legitimate reason to leverage the MSSQL JDBC driver over the native dialect but you could if you wanted to.
 >
-> Should work as-is but the MSSQL JDBC query pattern uses semi-colons as both the start and separator charactor.
+> Useful if a cross-platform solution is required. And also if the authorization of NTLM (including the login and password Active Directory) or Javakerberos is necessary 
 >
-> Will verify in future updates.
+>   __DRIVER__: https://learn.microsoft.com/en-us/sql/connect/jdbc/download-microsoft-jdbc-driver-for-sql-server
+>
+>   __DOCUMENTATION__: https://learn.microsoft.com/en-us/sql/connect/jdbc/microsoft-jdbc-driver-for-sql-server
+
+```python
+from sqlalchemy import create_engine
+from sqlalchemy.engine.url import URL
+
+eng_url = URL.create(
+    drivername="sqlajdbc",
+    host='myDomain.microsoft.sqlserver.com',
+    username='myUsername',
+    password='myFakePa$$w0rd',
+    query={
+        '_start': ';',
+        '_sep': ';',
+        '_class': 'com.microsoft.sqlserver.jdbc.SQLServerDriver',
+        '_driver': 'sqlserver',
+        '_jars': 'mssql-jdbc-#.#.#.jre11.jar',
+        '_jvmpath': '/path/to/Java/11/jvm.dll',
+        '_auto_commit': 'false',
+        'DatabaseName': 'database_name',
+        'domain': 'myDomain',
+        'integratedSecurity': 'true',
+        'authenticationScheme': 'javaKerberos',
+    }
+)
+
+eng = create_engine(eng_url)
+
+with eng.connect() as c:
+    res = c.execute('SELECT CURRENT_USER').fetchall()
+    print(res)
+```
 
 ### PostgreSQL
 > SQLAlchemy supports PostgreSQL natively so there may be no legitimate reason to leverage the PostgreSQL JDBC driver over the native dialect but you could if you wanted to.
