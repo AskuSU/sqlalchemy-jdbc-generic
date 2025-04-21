@@ -133,6 +133,8 @@ class BaseJDBCDialect(default.DefaultDialect):
     name = "sqlajdbc"
     driver = "jaydebeapi_ext"
 
+    supports_statement_cache = True
+
     @classmethod
     def import_dbapi(cls):
         return jaydebeapi_ext
