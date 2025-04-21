@@ -208,8 +208,10 @@ class BaseJDBCDialect(default.DefaultDialect):
         if orig_opts["_driver"] == "sqlserver":
             _dargs = {}
             for darg_name in jdbc_sqlserver_dargs_kw:
-                _dargs[darg_name] = orig_opts.pop(darg_name)
-            new_opts["_dargs"] = _dargs
+                if darg := orig_opts.pop(darg_name, None):
+                    _dargs[darg_name] = darg
+            if len(_dargs) > 0:
+                new_opts["_dargs"] = _dargs
 
         for k, v in orig_opts.items():
             if k in jdbc_kw:
