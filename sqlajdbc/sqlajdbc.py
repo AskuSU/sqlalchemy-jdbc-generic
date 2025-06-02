@@ -14,6 +14,7 @@ SQLAlchemy https://www.sqlalchemy.org/
 from sqlalchemy.engine import default
 import jaydebeapi as jaydebeapi_ext
 from urllib.parse import quote_plus, unquote
+from importlib.resources import path as resource_path
 
 """ 
 Modify how the base jaydebeapi interacts with jpype and add hooks to 
@@ -225,11 +226,24 @@ class BaseJDBCDialect(default.DefaultDialect):
                 host += f"{pre}{k}{_assoc}{quote_plus(str(v))}"
         host += _end
 
+        _jars_list = []
         if "_jars" in new_opts.keys():
-            new_opts["_jars"] = unquote(new_opts["_jars"]).split(",")
+            _jars_list = unquote(new_opts["_jars"]).split(",")
+        if orig_opts["_driver"] == "sqlserver":
+            _jars_list.append(self._get_mssql_jar_path())
+            if "_class" not in new_opts.keys():
+                new_opts["_class"] = "com.microsoft.sqlserver.jdbc.SQLServerDriver"
+        if _jars_list:
+            new_opts["_jars"] = _jars_list
+
         new_opts["url"] = unquote(f'jdbc:{new_opts.pop("_driver")}://{host}')
 
         return [[], new_opts]
+
+    @staticmethod
+    def _get_mssql_jar_path() -> str:
+        with resource_path("sqlajdbc.drivers", "mssql-jdbc.jre11.jar") as p:
+            return str(p)
 
 
 dialect = BaseJDBCDialect
