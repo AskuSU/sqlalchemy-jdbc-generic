@@ -231,6 +231,8 @@ class BaseJDBCDialect(default.DefaultDialect):
             _jars_list = unquote(new_opts["_jars"]).split(",")
         if orig_opts["_driver"] == "sqlserver":
             _jars_list.append(self._get_mssql_jar_path())
+            if "_class" not in new_opts.keys():
+                new_opts["_class"] = "com.microsoft.sqlserver.jdbc.SQLServerDriver"
         if _jars_list:
             new_opts["_jars"] = _jars_list
 
