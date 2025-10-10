@@ -45,7 +45,7 @@ def _jdbc_connect_jpype(jclassname, url, driver_args, jars, libs, *args, **kwarg
         jvmpath = kwargs.get("_jvmpath", jpype.getDefaultJVMPath())
         if hasattr(jpype, "__version__"):
             try:
-                ver_match = match("\d+\.\d+", jpype.__version__)
+                ver_match = match(r"\d+\.\d+", jpype.__version__)
                 if ver_match:
                     jpype_ver = float(ver_match.group(0))
                     if jpype_ver < 0.7:
